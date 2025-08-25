@@ -1,0 +1,60 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Exam {
+private:
+    string* studentName;
+    string* examDate;   
+    int score;
+
+public:
+    Exam(string name, string date, int s) {
+        studentName = new string(name);
+        examDate = new string(date);
+        score = s;
+    }
+    ~Exam() {
+        delete studentName;
+        delete examDate;
+    }
+    void setStudentName(string name) {
+        *studentName = name;
+    }
+
+    void setExamDate(string date) {
+        *examDate = date;
+    }
+
+    void setScore(int s) {
+        score = s;
+    }
+
+    void display() const {
+        cout << "Student: " << *studentName
+             << "\nExam Date: " << *examDate
+             << "\nScore: " << score << endl;
+    }
+};
+
+int main() {
+    Exam exam1("Alice", "2025-08-25", 90);
+    cout << "Exam1 details:" << endl;
+    exam1.display();
+
+    Exam exam2 = exam1;  
+    cout << "\nExam2 details (after shallow copy):" << endl;
+    exam2.display();
+
+    exam2.setStudentName("Bob");
+    exam2.setExamDate("2025-09-01");
+    exam2.setScore(75);
+
+    cout << "\nExam2 details (after modification):" << endl;
+    exam2.display();
+
+    cout << "\nExam1 details (after exam2 modification):" << endl;
+    exam1.display();
+
+    return 0;
+}
