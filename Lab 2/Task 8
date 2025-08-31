@@ -1,0 +1,47 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int days, times;
+    cout << "Enter number of days: ";
+    cin >> days;
+    cout << "Enter number of readings per day: ";
+    cin >> times;
+
+    double** temp = new double*[days];
+    double* dailyAvg = new double[days];
+
+    for (int i = 0; i < days; i++) {
+        temp[i] = new double[times];
+        double sum = 0;
+        cout << "\nEnter temperatures for Day " << i + 1 << ":\n";
+        for (int j = 0; j < times; j++) {
+            cout << "Reading " << j + 1 << ": ";
+            cin >> temp[i][j];
+            sum += temp[i][j];
+        }
+        dailyAvg[i] = sum / times;
+    }
+
+    cout << "\nDaily Average Temperatures:\n";
+    for (int i = 0; i < days; i++) {
+        cout << "Day " << i + 1 << ": " << dailyAvg[i] << endl;
+    }
+
+    int hottest = 0, coldest = 0;
+    for (int i = 1; i < days; i++) {
+        if (dailyAvg[i] > dailyAvg[hottest]) hottest = i;
+        if (dailyAvg[i] < dailyAvg[coldest]) coldest = i;
+    }
+
+    cout << "\nHottest Day: Day " << hottest + 1 
+         << " (Avg Temp = " << dailyAvg[hottest] << ")" << endl;
+    cout << "Coldest Day: Day " << coldest + 1 
+         << " (Avg Temp = " << dailyAvg[coldest] << ")" << endl;
+
+    for (int i = 0; i < days; i++) delete[] temp[i];
+    delete[] temp;
+    delete[] dailyAvg;
+
+    return 0;
+}
