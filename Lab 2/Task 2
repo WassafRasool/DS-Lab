@@ -1,51 +1,39 @@
 #include <iostream>
 using namespace std;
-
 int main() {
-    int categories;
-    cout << "Enter number of categories: ";
-    cin >> categories;
+    int rows, cols;
+    cout << "Enter number of benches (rows): ";
+    cin >> rows;
+    cout << "Enter number of seats per bench (columns): ";
+    cin >> cols;
 
-    int* booksInCategory = new int[categories];
-    int** library = new int*[categories];
-
-    for (int i = 0; i < categories; i++) {
-        cout << "\nEnter number of books in category " << i + 1 << ": ";
-        cin >> booksInCategory[i];
-        library[i] = new int[booksInCategory[i]];
-
-        cout << "Enter book IDs for category " << i + 1 << ":\n";
-        for (int j = 0; j < booksInCategory[i]; j++) {
-            cin >> library[i][j];
-        }
+    int** seats = new int*[rows];
+    for (int i = 0; i < rows; i++) {
+        seats[i] = new int[cols];
+        for (int j = 0; j < cols; j++) seats[i][j] = 0;
     }
 
-    int searchID;
-    cout << "\nEnter Book ID to search: ";
-    cin >> searchID;
+    int r, c;
+    char choice;
+    do {
+        cout << "\nEnter row (0 to " << rows - 1 << "): ";
+        cin >> r;
+        cout << "Enter column (0 to " << cols - 1 << "): ";
+        cin >> c;
+        if (r >= 0 && r < rows && c >= 0 && c < cols) seats[r][c] = 1;
+        else cout << "Invalid position!" << endl;
+        cout << "Do you want to fill another seat? (y/n): ";
+        cin >> choice;
+    } while (choice == 'y' || choice == 'Y');
 
-    bool found = false;
-    int foundCategory = -1;
-    for (int i = 0; i < categories; i++) {
-        for (int j = 0; j < booksInCategory[i]; j++) {
-            if (library[i][j] == searchID) {
-                found = true;
-                foundCategory = i;
-                break;
-            }
-        }
-        if (found) break;
+    cout << "\nFinal Seating Chart:\n";
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) cout << seats[i][j] << " ";
+        cout << endl;
     }
 
-    if (found)
-        cout << "Book ID " << searchID << " is available in Category " 
-             << foundCategory + 1 << endl;
-    else
-        cout << "Book ID " << searchID << " is NOT available in the library." << endl;
-
-    for (int i = 0; i < categories; i++) delete[] library[i];
-    delete[] library;
-    delete[] booksInCategory;
-
+    for (int i = 0; i < rows; i++) delete[] seats[i];
+    delete[] seats;
     return 0;
 }
+
