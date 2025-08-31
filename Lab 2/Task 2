@@ -1,0 +1,51 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int categories;
+    cout << "Enter number of categories: ";
+    cin >> categories;
+
+    int* booksInCategory = new int[categories];
+    int** library = new int*[categories];
+
+    for (int i = 0; i < categories; i++) {
+        cout << "\nEnter number of books in category " << i + 1 << ": ";
+        cin >> booksInCategory[i];
+        library[i] = new int[booksInCategory[i]];
+
+        cout << "Enter book IDs for category " << i + 1 << ":\n";
+        for (int j = 0; j < booksInCategory[i]; j++) {
+            cin >> library[i][j];
+        }
+    }
+
+    int searchID;
+    cout << "\nEnter Book ID to search: ";
+    cin >> searchID;
+
+    bool found = false;
+    int foundCategory = -1;
+    for (int i = 0; i < categories; i++) {
+        for (int j = 0; j < booksInCategory[i]; j++) {
+            if (library[i][j] == searchID) {
+                found = true;
+                foundCategory = i;
+                break;
+            }
+        }
+        if (found) break;
+    }
+
+    if (found)
+        cout << "Book ID " << searchID << " is available in Category " 
+             << foundCategory + 1 << endl;
+    else
+        cout << "Book ID " << searchID << " is NOT available in the library." << endl;
+
+    for (int i = 0; i < categories; i++) delete[] library[i];
+    delete[] library;
+    delete[] booksInCategory;
+
+    return 0;
+}
