@@ -2,50 +2,43 @@
 using namespace std;
 
 int main() {
-    int categories;
-    cout << "Enter number of categories: ";
-    cin >> categories;
+    int departments;
+    cout << "Enter number of departments: ";
+    cin >> departments;
 
-    int* booksInCategory = new int[categories];
-    int** library = new int*[categories];
+    int** salaries = new int*[departments];
+    int* employees = new int[departments];
+    double* avg = new double[departments];
 
-    for (int i = 0; i < categories; i++) {
-        cout << "\nEnter number of books in category " << i + 1 << ": ";
-        cin >> booksInCategory[i];
-        library[i] = new int[booksInCategory[i]];
+    for (int i = 0; i < departments; i++) {
+        cout << "\nEnter number of employees in department " << i + 1 << ": ";
+        cin >> employees[i];
+        salaries[i] = new int[employees[i]];
 
-        cout << "Enter book IDs for category " << i + 1 << ":\n";
-        for (int j = 0; j < booksInCategory[i]; j++) {
-            cin >> library[i][j];
+        int sum = 0, highest = -1;
+        for (int j = 0; j < employees[i]; j++) {
+            cout << "Enter salary of employee " << j + 1 << ": ";
+            cin >> salaries[i][j];
+            sum += salaries[i][j];
+            if (salaries[i][j] > highest) highest = salaries[i][j];
         }
+        avg[i] = (double)sum / employees[i];
+        cout << "Highest salary in Department " << i + 1 << ": " << highest << endl;
     }
 
-    int searchID;
-    cout << "\nEnter Book ID to search: ";
-    cin >> searchID;
-
-    bool found = false;
-    int foundCategory = -1;
-    for (int i = 0; i < categories; i++) {
-        for (int j = 0; j < booksInCategory[i]; j++) {
-            if (library[i][j] == searchID) {
-                found = true;
-                foundCategory = i;
-                break;
-            }
-        }
-        if (found) break;
+    int bestDept = 0;
+    for (int i = 1; i < departments; i++) {
+        if (avg[i] > avg[bestDept]) bestDept = i;
     }
 
-    if (found)
-        cout << "Book ID " << searchID << " is available in Category " 
-             << foundCategory + 1 << endl;
-    else
-        cout << "Book ID " << searchID << " is NOT available in the library." << endl;
+    cout << "\nDepartment with highest average salary: Department " << bestDept + 1 
+         << " (Average = " << avg[bestDept] << ")" << endl;
 
-    for (int i = 0; i < categories; i++) delete[] library[i];
-    delete[] library;
-    delete[] booksInCategory;
+    for (int i = 0; i < departments; i++) delete[] salaries[i];
+    delete[] salaries;
+    delete[] employees;
+    delete[] avg;
 
     return 0;
 }
+
