@@ -1,51 +1,45 @@
 #include <iostream>
 using namespace std;
-
 int main() {
-    int categories;
-    cout << "Enter number of categories: ";
-    cin >> categories;
+    int n;
+    cout << "Enter number of months: ";
+    cin >> n;
 
-    int* booksInCategory = new int[categories];
-    int** library = new int*[categories];
-
-    for (int i = 0; i < categories; i++) {
-        cout << "\nEnter number of books in category " << i + 1 << ": ";
-        cin >> booksInCategory[i];
-        library[i] = new int[booksInCategory[i]];
-
-        cout << "Enter book IDs for category " << i + 1 << ":\n";
-        for (int j = 0; j < booksInCategory[i]; j++) {
-            cin >> library[i][j];
-        }
+    double* expenses = new double[n];
+    for (int i = 0; i < n; i++) {
+        cout << "Enter expense for month " << i + 1 << ": ";
+        cin >> expenses[i];
     }
 
-    int searchID;
-    cout << "\nEnter Book ID to search: ";
-    cin >> searchID;
+    char choice;
+    cout << "Do you want to add more months? (y/n): ";
+    cin >> choice;
+    if (choice == 'y' || choice == 'Y') {
+        int extra;
+        cout << "Enter additional number of months: ";
+        cin >> extra;
 
-    bool found = false;
-    int foundCategory = -1;
-    for (int i = 0; i < categories; i++) {
-        for (int j = 0; j < booksInCategory[i]; j++) {
-            if (library[i][j] == searchID) {
-                found = true;
-                foundCategory = i;
-                break;
-            }
+        double* newArr = new double[n + extra];
+        for (int i = 0; i < n; i++) newArr[i] = expenses[i];
+
+        for (int i = n; i < n + extra; i++) {
+            cout << "Enter expense for month " << i + 1 << ": ";
+            cin >> newArr[i];
         }
-        if (found) break;
+
+        delete[] expenses;
+        expenses = newArr;
+        n += extra;
     }
 
-    if (found)
-        cout << "Book ID " << searchID << " is available in Category " 
-             << foundCategory + 1 << endl;
-    else
-        cout << "Book ID " << searchID << " is NOT available in the library." << endl;
+    double total = 0;
+    for (int i = 0; i < n; i++) total += expenses[i];
+    double avg = total / n;
 
-    for (int i = 0; i < categories; i++) delete[] library[i];
-    delete[] library;
-    delete[] booksInCategory;
+    cout << "\nTotal Expenses = " << total << endl;
+    cout << "Average Expense = " << avg << endl;
 
+    delete[] expenses;
     return 0;
 }
+
