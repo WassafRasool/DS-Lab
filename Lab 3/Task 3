@@ -1,0 +1,59 @@
+#include <iostream>
+using namespace std;
+
+struct Node {
+    int data;
+    Node* next;
+};
+
+Node* reverseK(Node* head, int k) {
+    Node* prev = NULL;
+    Node* curr = head;
+    Node* next = NULL;
+    int count = 0;
+
+    // reverse first k nodes
+    while (curr != NULL && count < k) {
+        next = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = next;
+        count++;
+    }
+
+    // connect rest of the list
+    if (next != NULL)
+        head->next = reverseK(next, k);
+
+    return prev; // new head of this segment
+}
+
+int main() {
+    Node* head = NULL;
+    Node* tail = NULL;
+
+    int n, val, k;
+    cout << "Enter number of elements: ";
+    cin >> n;
+    cout << "Enter " << n << " integers: ";
+    for (int i = 0; i < n; i++) {
+        cin >> val;
+        Node* newNode = new Node{val, NULL};
+        if (!head) { head = tail = newNode; }
+        else { tail->next = newNode; tail = newNode; }
+    }
+
+    cout << "Enter group size k: ";
+    cin >> k;
+
+    head = reverseK(head, k);
+
+    cout << "Reversed List in groups of " << k << ": ";
+    Node* temp = head;
+    while (temp) {
+        cout << temp->data << " ";
+        temp = temp->next;
+    }
+
+    return 0;
+}
