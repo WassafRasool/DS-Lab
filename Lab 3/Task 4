@@ -1,0 +1,45 @@
+#include <iostream>
+using namespace std;
+
+struct Node {
+    int data;
+    Node* next;
+};
+
+int main() {
+    int n, k;
+    cout << "Enter number of people (N): ";
+    cin >> n;
+    cout << "Enter step size (k): ";
+    cin >> k;
+
+    Node* head = NULL;
+    Node* tail = NULL;
+    for (int i = 1; i <= n; i++) {
+        Node* newNode = new Node{i, NULL};
+        if (!head) {
+            head = newNode;
+            tail = newNode;
+        } else {
+            tail->next = newNode;
+            tail = newNode;
+        }
+    }
+    tail->next = head; 
+    Node* curr = head;
+    Node* prev = tail;
+
+    while (curr->next != curr) {
+        for (int count = 1; count < k; count++) {
+            prev = curr;
+            curr = curr->next;
+        }
+        prev->next = curr->next;
+        delete curr;
+        curr = prev->next;
+    }
+
+    cout << "The survivor is at position: " << curr->data;
+
+    return 0;
+}
