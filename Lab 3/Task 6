@@ -1,0 +1,69 @@
+#include <iostream>
+using namespace std;
+
+struct Node {
+    int data;
+    Node* next;
+    Node* child;
+};
+
+Node* flatten(Node* head) {
+    Node* curr = head;
+    while (curr) {
+        if (curr->child) {
+            Node* nextNode = curr->next;
+            curr->next = curr->child;
+            Node* temp = curr->child;
+            while (temp->next) temp = temp->next;
+            temp->next = nextNode;
+            curr->child = NULL;
+        }
+        curr = curr->next;
+    }
+    return head;
+}
+
+void display(Node* head) {
+    while (head) {
+        cout << head->data << " ";
+        head = head->next;
+    }
+    cout << endl;
+}
+
+int main() {
+    int n;
+    cout << "Enter number of nodes in main list: ";
+    cin >> n;
+    cout << "Enter values: ";
+    Node* head = NULL, *tail = NULL;
+    for (int i = 0; i < n; i++) {
+        int val; cin >> val;
+        Node* newNode = new Node{val, NULL, NULL};
+        if (!head) head = tail = newNode;
+        else { tail->next = newNode; tail = newNode; }
+    }
+    Node* temp = head;
+    while (temp) {
+        char choice;
+        cout << "Does node " << temp->data << " have a child list? (y/n): ";
+        cin >> choice;
+        if (choice == 'y') {
+            int m; cout << "Enter number of nodes in child list: ";
+            cin >> m;
+            cout << "Enter values: ";
+            Node* chead = NULL, *ctail = NULL;
+            for (int j = 0; j < m; j++) {
+                int val; cin >> val;
+                Node* newNode = new Node{val, NULL, NULL};
+                if (!chead) chead = ctail = newNode;
+                else { ctail->next = newNode; ctail = newNode; }
+            }
+            temp->child = chead;
+        }
+        temp = temp->next;
+    }
+    cout << "Flattened List: ";
+    display(flatten(head));
+    return 0;
+}
