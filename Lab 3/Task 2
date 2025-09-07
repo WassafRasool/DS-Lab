@@ -1,0 +1,97 @@
+#include <iostream>
+using namespace std;
+
+struct Node {
+    int data;
+    Node* next;
+};
+
+void insertEnd(Node*& head, int val) {
+    Node* newNode = new Node;
+    newNode->data = val;
+    newNode->next = NULL;
+    if (head == NULL) head = newNode;
+    else {
+        Node* temp = head;
+        while (temp->next != NULL) temp = temp->next;
+        temp->next = newNode;
+    }
+}
+
+Node* mergeLists(Node* head1, Node* head2) {
+    if (!head1) return head2;
+    if (!head2) return head1;
+
+    Node* mergedHead = NULL;
+    Node* tail = NULL;
+
+    if (head1->data < head2->data) {
+        mergedHead = head1;
+        head1 = head1->next;
+    } else {
+        mergedHead = head2;
+        head2 = head2->next;
+    }
+    tail = mergedHead;
+
+    while (head1 && head2) {
+        if (head1->data < head2->data) {
+            tail->next = head1;
+            head1 = head1->next;
+        } else {
+            tail->next = head2;
+            head2 = head2->next;
+        }
+        tail = tail->next;
+    }
+
+    if (head1) tail->next = head1;
+    if (head2) tail->next = head2;
+
+    return mergedHead;
+}
+
+void display(Node* head) {
+    Node* temp = head;
+    while (temp != NULL) {
+        cout << temp->data;
+        if (temp->next) cout << " -> ";
+        temp = temp->next;
+    }
+    cout << endl;
+}
+
+int main() {
+    Node* list1 = NULL;
+    Node* list2 = NULL;
+
+    int n1, n2, val;
+
+    cout << "Enter number of elements in List A: ";
+    cin >> n1;
+    cout << "Enter " << n1 << " sorted integers: ";
+    for (int i = 0; i < n1; i++) {
+        cin >> val;
+        insertEnd(list1, val);
+    }
+
+    cout << "Enter number of elements in List B: ";
+    cin >> n2;
+    cout << "Enter " << n2 << " sorted integers: ";
+    for (int i = 0; i < n2; i++) {
+        cin >> val;
+        insertEnd(list2, val);
+    }
+
+    cout << "List A: ";
+    display(list1);
+    cout << "List B: ";
+    display(list2);
+
+    Node* merged = mergeLists(list1, list2);
+
+    cout << "Merged List: ";
+    display(merged);
+
+    return 0;
+}
