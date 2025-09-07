@@ -1,1 +1,55 @@
+#include <iostream>
+using namespace std;
+
+struct Node {
+    int data;
+    Node* next;
+};
+
+int main() {
+    Node* head = NULL;
+    Node* tail = NULL;
+
+    int n, val;
+    cout << "Enter number of elements in the list: ";
+    cin >> n;
+
+    cout << "Enter " << n << " integers: ";
+    for (int i = 0; i < n; i++) {
+        cin >> val;
+        Node* newNode = new Node;
+        newNode->data = val;
+        newNode->next = NULL;
+        if (head == NULL) {
+            head = newNode;
+            tail = newNode;
+        } else {
+            tail->next = newNode;
+            tail = newNode;
+        }
+    }
+
+    int arr[100], size = 0;
+    Node* temp = head;
+    while (temp != NULL) {
+        arr[size++] = temp->data;
+        temp = temp->next;
+    }
+
+    bool palindrome = true;
+    int i = 0, j = size - 1;
+    while (i < j) {
+        if (arr[i] != arr[j]) {
+            palindrome = false;
+            break;
+        }
+        i++;
+        j--;
+    }
+
+    if (palindrome) cout << "The list is a palindrome.";
+    else cout << "The list is NOT a palindrome.";
+
+    return 0;
+}
 
