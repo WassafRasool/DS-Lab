@@ -1,0 +1,80 @@
+#include <iostream>
+using namespace std;
+
+int N; // board size
+
+// Function to check if it's safe to place a queen
+bool isSafe(char board[10][10], int row, int col) {
+    int i, j;
+
+    // --- Horizontal check ---
+    for (j = 0; j < N; j++) {
+        if (board[row][j] == 'Q' && j != col)
+            return false;
+    }
+
+    // --- Vertical check ---
+    for (i = 0; i < N; i++) {
+        if (board[i][col] == 'Q' && i != row)
+            return false;
+    }
+
+    // --- Left diagonal check ---
+    for (i = 0; i < N; i++) {
+        int j1 = col - (row - i);
+        if (j1 >= 0 && j1 < N && board[i][j1] == 'Q' && i != row)
+            return false;
+    }
+
+    // --- Right diagonal check ---
+    for (i = 0; i < N; i++) {
+        int j2 = col + (row - i);
+        if (j2 >= 0 && j2 < N && board[i][j2] == 'Q' && i != row)
+            return false;
+    }
+
+    return true;
+}
+
+// Recursive backtracking function
+bool solveNQueens(char board[10][10], int row) {
+    if (row == N)
+        return true; // All queens placed successfully
+
+    for (int col = 0; col < N; col++) {
+        if (isSafe(board, row, col)) {
+            board[row][col] = 'Q'; // Place queen
+
+            if (solveNQueens(board, row + 1))
+                return true;
+
+            board[row][col] = '.'; // Backtrack
+        }
+    }
+    return false;
+}
+
+int main() {
+    cout << "Enter number of queens: ";
+    cin >> N;
+
+    char board[10][10]; // simple 2D array
+
+    // Initialize board with '.'
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            board[i][j] = '.';
+
+    if (solveNQueens(board, 0)) {
+        cout << "\nSolution:\n";
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++)
+                cout << board[i][j] << " ";
+            cout << endl;
+        }
+    } else {
+        cout << "No solution exists.\n";
+    }
+
+    return 0;
+}
