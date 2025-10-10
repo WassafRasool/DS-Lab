@@ -9,27 +9,27 @@ bool isSafe(char board[10][10], int row, int col) {
 
     // --- Horizontal check ---
     for (j = 0; j < N; j++) {
-        if (board[row][j] == 'Q' && j != col)
+        if (board[row][j] == 'Q')
             return false;
     }
 
     // --- Vertical check ---
     for (i = 0; i < N; i++) {
-        if (board[i][col] == 'Q' && i != row)
+        if (board[i][col] == 'Q')
             return false;
     }
 
     // --- Left diagonal check ---
     for (i = 0; i < N; i++) {
         int j1 = col - (row - i);
-        if (j1 >= 0 && j1 < N && board[i][j1] == 'Q' && i != row)
+        if (j1 >= 0 && j1 < N && board[i][j1] == 'Q')
             return false;
     }
 
     // --- Right diagonal check ---
     for (i = 0; i < N; i++) {
         int j2 = col + (row - i);
-        if (j2 >= 0 && j2 < N && board[i][j2] == 'Q' && i != row)
+        if (j2 >= 0 && j2 < N && board[i][j2] == 'Q')
             return false;
     }
 
