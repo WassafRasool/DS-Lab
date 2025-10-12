@@ -1,0 +1,55 @@
+#include <iostream>
+using namespace std;
+
+class Node {
+public:
+    string data;
+    Node* next;
+    Node(string d) { data = d; next = NULL; }
+};
+
+class Stack {
+    Node* top;
+public:
+    Stack() { top = NULL; }
+    void push(string x) {
+        Node* n = new Node(x);
+        n->next = top;
+        top = n;
+    }
+    void pop() {
+        if (!top) cout << "No history\n";
+        else {
+            cout << "Back from: " << top->data << endl;
+            Node* t = top;
+            top = top->next;
+            delete t;
+        }
+    }
+    void peek() {
+        if (!top) cout << "No current page\n";
+        else cout << "Current page: " << top->data << endl;
+    }
+    void display() {
+        if (!top) cout << "Empty\n";
+        else {
+            Node* temp = top;
+            while (temp) {
+                cout << temp->data << endl;
+                temp = temp->next;
+            }
+        }
+    }
+};
+
+int main() {
+    Stack history;
+    history.push("Home");
+    history.push("Search");
+    history.push("Article");
+    history.peek();
+    history.pop();
+    history.peek();
+    cout << "History:\n";
+    history.display();
+}
