@@ -1,0 +1,99 @@
+#include <iostream>
+using namespace std;
+
+#define SIZE 5
+
+class Process {
+public:
+    int id, priority;
+};
+
+class Queue {
+    Process arr[SIZE];
+    int front, rear;
+public:
+    Queue() { front = -1; rear = -1; }
+    bool empty() { return front == -1; }
+    bool full() { return rear == SIZE - 1; }
+    void enqueue(Process p) {
+        if (full()) cout << "Queue Full\n";
+        else {
+            if (front == -1) front = 0;
+            arr[++rear] = p;
+        }
+    }
+    Process dequeue() {
+        Process temp;
+        if (empty()) cout << "Queue Empty\n";
+        else {
+            temp = arr[front];
+            if (front == rear) front = rear = -1;
+            else front++;
+        }
+        return temp;
+    }
+    void display() {
+        if (empty()) cout << "No waiting processes\n";
+        else {
+            cout << "Arrival Queue:\n";
+            for (int i = front; i <= rear; i++)
+                cout << "ID: " << arr[i].id << "  Priority: " << arr[i].priority << endl;
+        }
+    }
+};
+
+class Stack {
+    Process arr[SIZE];
+    int top;
+public:
+    Stack() { top = -1; }
+    bool empty() { return top == -1; }
+    bool full() { return top == SIZE - 1; }
+    void push(Process p) {
+        if (full()) cout << "Stack Full\n";
+        else arr[++top] = p;
+    }
+    Process pop() {
+        Process temp;
+        if (empty()) cout << "Stack Empty\n";
+        else temp = arr[top--];
+        return temp;
+    }
+    void display() {
+        if (empty()) cout << "No executing processes\n";
+        else {
+            cout << "Execution Stack:\n";
+            for (int i = top; i >= 0; i--)
+                cout << "ID: " << arr[i].id << "  Priority: " << arr[i].priority << endl;
+        }
+    }
+};
+
+int main() {
+    Queue q;
+    Stack s;
+
+    Process p1 = {1, 2};
+    Process p2 = {2, 1};
+    Process p3 = {3, 3};
+
+    q.enqueue(p1);
+    q.enqueue(p2);
+    q.enqueue(p3);
+
+    q.display();
+
+    cout << "\nMoving to execution stack (higher priority first)...\n";
+    while (!q.empty()) {
+        Process p = q.dequeue();
+        if (p.priority >= 2) s.push(p);
+    }
+
+    s.display();
+
+    cout << "\nExecuting (LIFO order):\n";
+    while (!s.empty()) {
+        Process p = s.pop();
+        cout << "Running Process ID: " << p.id << "  Priority: " << p.priority << endl;
+    }
+}
