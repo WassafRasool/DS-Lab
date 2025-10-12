@@ -1,0 +1,71 @@
+#include <iostream>
+using namespace std;
+
+#define SIZE 50
+
+class Stack {
+    char arr[SIZE];
+    int top;
+public:
+    Stack() { top = -1; }
+    void push(char x) { arr[++top] = x; }
+    char pop() { return arr[top--]; }
+    char peek() { return arr[top]; }
+    bool empty() { return top == -1; }
+};
+
+int prec(char c) {
+    if (c == '^') return 3;
+    if (c == '*' || c == '/') return 2;
+    if (c == '+' || c == '-') return 1;
+    return -1;
+}
+
+int power(int a, int b) {
+    int res = 1;
+    for (int i = 0; i < b; i++) res *= a;
+    return res;
+}
+
+string infixToPostfix(string s) {
+    Stack st;
+    string res = "";
+    for (int i = 0; s[i]; i++) {
+        char c = s[i];
+        if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z')) res += c;
+        else if (c == '(') st.push(c);
+        else if (c == ')') {
+            while (!st.empty() && st.peek() != '(') res += st.pop();
+            st.pop();
+        } else {
+            while (!st.empty() && prec(st.peek()) >= prec(c)) res += st.pop();
+            st.push(c);
+        }
+    }
+    while (!st.empty()) res += st.pop();
+    return res;
+}
+
+int evalPostfix(string s) {
+    int st[SIZE], top = -1;
+    for (int i = 0; s[i]; i++) {
+        char c = s[i];
+        if (c >= '0' && c <= '9') st[++top] = c - '0';
+        else {
+            int b = st[top--], a = st[top--];
+            if (c == '+') st[++top] = a + b;
+            else if (c == '-') st[++top] = a - b;
+            else if (c == '*') st[++top] = a * b;
+            else if (c == '/') st[++top] = a / b;
+            else if (c == '^') st[++top] = power(a, b);
+        }
+    }
+    return st[top];
+}
+
+int main() {
+    string infix = "3+(2*4)-5";
+    string postfix = infixToPostfix(infix);
+    cout << "Postfix: " << postfix << endl;
+    cout << "Result: " << evalPostfix(postfix) << endl;
+}
