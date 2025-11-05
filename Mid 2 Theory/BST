@@ -1,0 +1,111 @@
+#include <iostream>
+using namespace std;
+
+// ------------------- Node Class -------------------
+class Node {
+public:
+    int key;
+    Node* left;
+    Node* right;
+
+    Node(int val) {
+        key = val;
+        left = right = nullptr;
+    }
+};
+
+// ------------------- BST Class -------------------
+class BST {
+public:
+    Node* insert(Node* root, int key) {
+        if (root == nullptr)
+            return new Node(key);
+
+        if (key < root->key)
+            root->left = insert(root->left, key);
+        else if (key > root->key)
+            root->right = insert(root->right, key);
+
+        return root;
+    }
+
+    Node* search(Node* root, int key) {
+        if (root == nullptr || root->key == key)
+            return root;
+        if (key < root->key)
+            return search(root->left, key);
+        return search(root->right, key);
+    }
+
+    Node* findMin(Node* root) {
+        while (root && root->left != nullptr)
+            root = root->left;
+        return root;
+    }
+
+    Node* deleteNode(Node* root, int key) {
+        if (root == nullptr)
+            return root;
+
+        if (key < root->key)
+            root->left = deleteNode(root->left, key);
+        else if (key > root->key)
+            root->right = deleteNode(root->right, key);
+        else {
+            if (root->left == nullptr) {
+                Node* temp = root->right;
+                delete root;
+                return temp;
+            } 
+            else if (root->right == nullptr) {
+                Node* temp = root->left;
+                delete root;
+                return temp;
+            }
+
+            Node* temp = findMin(root->right);
+            root->key = temp->key;
+            root->right = deleteNode(root->right, temp->key);
+        }
+        return root;
+    }
+
+    void inorder(Node* root) {
+        if (root) {
+            inorder(root->left);
+            cout << root->key << " ";
+            inorder(root->right);
+        }
+    }
+};
+
+// ------------------- Main Function -------------------
+int main() {
+    BST tree;
+    Node* root = nullptr;
+
+    root = tree.insert(root, 50);
+    root = tree.insert(root, 30);
+    root = tree.insert(root, 70);
+    root = tree.insert(root, 20);
+    root = tree.insert(root, 40);
+    root = tree.insert(root, 60);
+    root = tree.insert(root, 80);
+
+    cout << "BST Inorder Traversal: ";
+    tree.inorder(root);
+    cout << endl;
+
+    cout << "Deleting 20\n";
+    root = tree.deleteNode(root, 20);
+    cout << "After Deletion: ";
+    tree.inorder(root);
+    cout << endl;
+
+    int key = 60;
+    Node* found = tree.search(root, key);
+    if (found)
+        cout << "Key " << key << " found in BST.\n";
+    else
+        cout << "Key " << key << " not found in BST.\n";
+}
