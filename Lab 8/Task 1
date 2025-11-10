@@ -1,0 +1,93 @@
+#include <iostream>
+using namespace std;
+
+class Person {
+public:
+    string name;
+    int age;
+    Person* mother;
+    Person* father;
+
+    Person(string n, int a) {
+        name = n;
+        age = a;
+        mother = NULL;
+        father = NULL;
+    }
+};
+
+int maxValue(int a, int b) {
+    if (a > b) return a;
+    else return b;
+}
+
+int treeHeight(Person* node) {
+    if (node == NULL) return 0;
+    int left = treeHeight(node->mother);
+    int right = treeHeight(node->father);
+    return 1 + maxValue(left, right);
+}
+
+void printLeafNodes(Person* node) {
+    if (node == NULL) return;
+    if (node->mother == NULL && node->father == NULL) {
+        cout << node->name << " (" << node->age << ") ";
+    }
+    printLeafNodes(node->mother);
+    printLeafNodes(node->father);
+}
+
+void printLevel(Person* node, int currLevel, int targetLevel) {
+    if (node == NULL) return;
+    if (currLevel == targetLevel) {
+        cout << node->name << " (" << node->age << ")  ";
+    }
+    printLevel(node->mother, currLevel + 1, targetLevel);
+    printLevel(node->father, currLevel + 1, targetLevel);
+}
+
+void printLevels(Person* root) {
+    int h = treeHeight(root);
+    for (int i = 0; i < h; i++) {
+        cout << "Level " << i << ": ";
+        printLevel(root, 0, i);
+        cout << endl;
+    }
+}
+
+int main() {
+    Person* mary = new Person("Mary", 85);
+    Person* tom = new Person("Tom", 88);
+    Person* linda = new Person("Linda", 82);
+    Person* robert = new Person("Robert", 90);
+
+    Person* sarah = new Person("Sarah", 60);
+    sarah->mother = mary;
+    sarah->father = tom;
+
+    Person* john = new Person("John", 63);
+    john->mother = linda;
+    john->father = robert;
+
+    Person* emma = new Person("Emma", 30);
+    emma->mother = sarah;
+    emma->father = john;
+
+    cout << "Root (youngest person): " << emma->name << " (" << emma->age << ")" << endl;
+    cout << "Leaf nodes: ";
+    printLeafNodes(emma);
+    cout << endl;
+    cout << "Height of the tree: " << treeHeight(emma) << endl;
+    cout << endl;
+    printLevels(emma);
+
+    delete mary;
+    delete tom;
+    delete linda;
+    delete robert;
+    delete sarah;
+    delete john;
+    delete emma;
+
+    return 0;
+}
