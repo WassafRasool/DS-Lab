@@ -1,1 +1,113 @@
+#include<iostream>
+using namespace std;
 
+class Song{
+public:
+    string title;
+    int playCount;
+    Song* left;
+    Song* right;
+
+    Song(string t,int p){
+        title=t;
+        playCount=p;
+        left=right=NULL;
+    }
+};
+
+class MusicApp{
+public:
+    Song* root;
+    MusicApp(){root=NULL;}
+
+    Song* insert(Song* node,string title,int playCount){
+        if(node==NULL) return new Song(title,playCount);
+        if(playCount<node->playCount)
+            node->left=insert(node->left,title,playCount);
+        else if(playCount>node->playCount)
+            node->right=insert(node->right,title,playCount);
+        return node;
+    }
+
+    Song* search(Song* node,int playCount){
+        if(node==NULL || node->playCount==playCount) return node;
+        if(playCount<node->playCount)
+            return search(node->left,playCount);
+        else
+            return search(node->right,playCount);
+    }
+
+    void inorder(Song* node){
+        if(node==NULL) return;
+        inorder(node->left);
+        cout<<node->title<<" ("<<node->playCount<<") ";
+        inorder(node->right);
+    }
+
+    void postorder(Song* node){
+        if(node==NULL) return;
+        postorder(node->left);
+        postorder(node->right);
+        cout<<node->title<<" ("<<node->playCount<<") ";
+    }
+
+    Song* findMin(Song* node){
+        while(node->left!=NULL) node=node->left;
+        return node;
+    }
+
+    Song* deleteSong(Song* node,int playCount){
+        if(node==NULL) return node;
+        if(playCount<node->playCount)
+            node->left=deleteSong(node->left,playCount);
+        else if(playCount>node->playCount)
+            node->right=deleteSong(node->right,playCount);
+        else{
+            if(node->left==NULL){
+                Song* temp=node->right;
+                delete node;
+                return temp;
+            }else if(node->right==NULL){
+                Song* temp=node->left;
+                delete node;
+                return temp;
+            }
+            Song* temp=findMin(node->right);
+            node->title=temp->title;
+            node->playCount=temp->playCount;
+            node->right=deleteSong(node->right,temp->playCount);
+        }
+        return node;
+    }
+};
+
+int main(){
+    MusicApp app;
+    app.root=app.insert(app.root,"ShapeOfYou",150);
+    app.root=app.insert(app.root,"BlindingLights",220);
+    app.root=app.insert(app.root,"Pasoori",180);
+    app.root=app.insert(app.root,"LetHerGo",90);
+    app.root=app.insert(app.root,"Perfect",250);
+
+    cout<<"Songs Inorder (least→most played): ";
+    app.inorder(app.root);
+    cout<<endl;
+
+    cout<<"Songs Postorder (removed in reverse popularity): ";
+    app.postorder(app.root);
+    cout<<endl;
+
+    int key=180;
+    Song* found=app.search(app.root,key);
+    if(found) cout<<"Found: "<<found->title<<" ("<<found->playCount<<")"<<endl;
+    else cout<<"Song with play count "<<key<<" not found"<<endl;
+
+    cout<<"\nDeleting song with play count 150...\n";
+    app.root=app.deleteSong(app.root,150);
+
+    cout<<"Updated BST (Inorder): ";
+    app.inorder(app.root);
+    cout<<endl;
+
+    return 0;
+}
