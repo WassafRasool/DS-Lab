@@ -1,0 +1,118 @@
+#include <iostream>
+using namespace std;
+
+class Node {
+public:
+    int key;
+    int height;
+    Node* left;
+    Node* right;
+
+    Node(int k) {
+        key = k;
+        height = 1;
+        left = 0;
+        right = 0;
+    }
+};
+
+class AVL {
+public:
+    Node* root;
+
+    AVL() {
+        root = 0;
+    }
+
+    int h(Node* n) {
+        if (n == 0) return 0;
+        return n->height;
+    }
+
+    int bf(Node* n) {
+        return h(n->left) - h(n->right);
+    }
+
+    Node* rr(Node* y) {
+        Node* x = y->left;
+        Node* t = x->right;
+        x->right = y;
+        y->left = t;
+        y->height = 1 + (h(y->left) > h(y->right) ? h(y->left) : h(y->right));
+        x->height = 1 + (h(x->left) > h(x->right) ? h(x->left) : h(x->right));
+        cout << "Rotation: Right" << endl;
+        return x;
+    }
+
+    Node* lr(Node* y) {
+        Node* x = y->right;
+        Node* t = x->left;
+        x->left = y;
+        y->right = t;
+        y->height = 1 + (h(y->left) > h(y->right) ? h(y->left) : h(y->right));
+        x->height = 1 + (h(x->left) > h(x->right) ? h(x->left) : h(x->right));
+        cout << "Rotation: Left" << endl;
+        return x;
+    }
+
+    Node* insertNode(Node* n, int key) {
+        if (n == 0) return new Node(key);
+
+        if (key < n->key) n->left = insertNode(n->left, key);
+        else if (key > n->key) n->right = insertNode(n->right, key);
+        else return n;
+
+        n->height = 1 + (h(n->left) > h(n->right) ? h(n->left) : h(n->right));
+
+        int balance = bf(n);
+
+        if (balance > 1 && key < n->left->key) return rr(n);
+        if (balance < -1 && key > n->right->key) return lr(n);
+        if (balance > 1 && key > n->left->key) {
+            n->left = lr(n->left);
+            return rr(n);
+        }
+        if (balance < -1 && key < n->right->key) {
+            n->right = rr(n->right);
+            return lr(n);
+        }
+
+        return n;
+    }
+
+    void range(Node* n, int x, int y) {
+        if (n == 0) return;
+        if (n->key > x) range(n->left, x, y);
+        if (n->key >= x && n->key <= y) cout << n->key << " ";
+        if (n->key < y) range(n->right, x, y);
+    }
+
+    void insertKey(int key) {
+        cout << "Insert: " << key << endl;
+        root = insertNode(root, key);
+        cout << "Height: " << h(root) << endl;
+        cout << endl;
+    }
+};
+
+int main() {
+    AVL t;
+
+    t.insertKey(500);
+    t.insertKey(200);
+    t.insertKey(800);
+    t.insertKey(100);
+    t.insertKey(300);
+    t.insertKey(700);
+    t.insertKey(900);
+
+    int X, Y;
+    cout << "Enter X and Y: ";
+    cin >> X >> Y;
+
+    cout << "Prices in range: ";
+    t.range(t.root, X, Y);
+    cout << endl;
+
+    return 0;
+}
