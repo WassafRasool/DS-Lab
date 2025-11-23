@@ -1,0 +1,167 @@
+#include <iostream>
+using namespace std;
+
+class Node {
+public:
+    int key;
+    int height;
+    Node* left;
+    Node* right;
+    Node(int k) {
+        key = k;
+        height = 1;
+        left = 0;
+        right = 0;
+    }
+};
+
+class AVL {
+public:
+    Node* root;
+    AVL() { root = 0; }
+
+    int h(Node* n) { return n ? n->height : 0; }
+    int bf(Node* n) { return h(n->left) - h(n->right); }
+
+    Node* rr(Node* y) {
+        Node* x = y->left;
+        Node* t = x->right;
+        x->right = y;
+        y->left = t;
+        y->height = 1 + (h(y->left) > h(y->right) ? h(y->left) : h(y->right));
+        x->height = 1 + (h(x->left) > h(x->right) ? h(x->left) : h(x->right));
+        cout << "Rotation: Right" << endl;
+        return x;
+    }
+
+    Node* lr(Node* y) {
+        Node* x = y->right;
+        Node* t = x->left;
+        x->left = y;
+        y->right = t;
+        y->height = 1 + (h(y->left) > h(y->right) ? h(y->left) : h(y->right));
+        x->height = 1 + (h(x->left) > h(x->right) ? h(x->left) : h(x->right));
+        cout << "Rotation: Left" << endl;
+        return x;
+    }
+
+    Node* insertNode(Node* n, int key) {
+        if (!n) return new Node(key);
+        if (key < n->key) n->left = insertNode(n->left, key);
+        else if (key > n->key) n->right = insertNode(n->right, key);
+        else return n;
+
+        n->height = 1 + (h(n->left) > h(n->right) ? h(n->left) : h(n->right));
+        int balance = bf(n);
+
+        if (balance > 1 && key < n->left->key) return rr(n);
+        if (balance < -1 && key > n->right->key) return lr(n);
+        if (balance > 1 && key > n->left->key) {
+            n->left = lr(n->left);
+            return rr(n);
+        }
+        if (balance < -1 && key < n->right->key) {
+            n->right = rr(n->right);
+            return lr(n);
+        }
+        return n;
+    }
+
+    Node* minNode(Node* n) {
+        while (n->left) n = n->left;
+        return n;
+    }
+
+    Node* removeNode(Node* n, int key) {
+        if (!n) return 0;
+        if (key < n->key) n->left = removeNode(n->left, key);
+        else if (key > n->key) n->right = removeNode(n->right, key);
+        else {
+            if (!n->left || !n->right) {
+                Node* tmp = n->left ? n->left : n->right;
+                if (!tmp) {
+                    delete n;
+                    return 0;
+                } else {
+                    *n = *tmp;
+                    delete tmp;
+                }
+            } else {
+                Node* tmp = minNode(n->right);
+                n->key = tmp->key;
+                n->right = removeNode(n->right, tmp->key);
+            }
+        }
+
+        n->height = 1 + (h(n->left) > h(n->right) ? h(n->left) : h(n->right));
+        int balance = bf(n);
+
+        if (balance > 1 && bf(n->left) >= 0) return rr(n);
+        if (balance > 1 && bf(n->left) < 0) {
+            n->left = lr(n->left);
+            return rr(n);
+        }
+        if (balance < -1 && bf(n->right) <= 0) return lr(n);
+        if (balance < -1 && bf(n->right) > 0) {
+            n->right = rr(n->right);
+            return lr(n);
+        }
+
+        return n;
+    }
+
+    void inorder(Node* n) {
+        if (!n) return;
+        inorder(n->left);
+        cout << n->key << " ";
+        inorder(n->right);
+    }
+
+    int highestSeverity() {
+        if (!root) return -1;
+        Node* n = root;
+        while (n->right) n = n->right;
+        return n->key;
+    }
+
+    void insertKey(int key) {
+        cout << "Insert: " << key << endl;
+        root = insertNode(root, key);
+        cout << "Height: " << h(root) << endl;
+        cout << "Inorder: ";
+        inorder(root);
+        cout << endl;
+        int hs = highestSeverity();
+        if (hs == -1) cout << "Highest severity: None" << endl;
+        else cout << "Highest severity: " << hs << endl;
+        cout << endl;
+    }
+
+    void deleteKey(int key) {
+        cout << "Delete: " << key << endl;
+        root = removeNode(root, key);
+        cout << "Height: " << h(root) << endl;
+        cout << "Inorder: ";
+        inorder(root);
+        cout << endl;
+        int hs = highestSeverity();
+        if (hs == -1) cout << "Highest severity: None" << endl;
+        else cout << "Highest severity: " << hs << endl;
+        cout << endl;
+    }
+};
+
+int main() {
+    AVL t;
+    t.insertKey(50);
+    t.insertKey(30);
+    t.insertKey(70);
+    t.insertKey(60);
+    t.insertKey(80);
+
+    t.deleteKey(70);
+    t.insertKey(90);
+    t.deleteKey(30);
+
+    return 0;
+}
