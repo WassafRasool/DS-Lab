@@ -1,0 +1,172 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+class Node {
+public:
+    string key;
+    int height;
+    Node* left;
+    Node* right;
+    Node(const string& k) : key(k), height(1), left(nullptr), right(nullptr) {}
+};
+
+class AVL {
+public:
+    AVL() : root(nullptr), lastRotation("None") {}
+    void insertKey(const string& k) {
+        lastRotation = "None";
+        affected.clear();
+        root = insert(root, k);
+        printOperation("Insert", k);
+    }
+    void deleteKey(const string& k) {
+        lastRotation = "None";
+        affected.clear();
+        root = remove(root, k);
+        printOperation("Delete", k);
+    }
+
+private:
+    Node* root;
+    string lastRotation;
+    vector<pair<string,int>> affected;
+
+    int mymax(int a, int b) { return a > b ? a : b; }
+
+    int height(Node* n) { return n ? n->height : 0; }
+
+    int balanceFactor(Node* n) { return n ? height(n->left) - height(n->right) : 0; }
+
+    void updateHeight(Node* n) { if (n) n->height = 1 + mymax(height(n->left), height(n->right)); }
+
+    Node* rotateRight(Node* y) {
+        Node* x = y->left;
+        Node* T2 = x->right;
+        x->right = y;
+        y->left = T2;
+        updateHeight(y);
+        updateHeight(x);
+        lastRotation = "LL";
+        affected.clear();
+        affected.push_back({x->key, balanceFactor(x)});
+        affected.push_back({y->key, balanceFactor(y)});
+        return x;
+    }
+
+    Node* rotateLeft(Node* x) {
+        Node* y = x->right;
+        Node* T2 = y->left;
+        y->left = x;
+        x->right = T2;
+        updateHeight(x);
+        updateHeight(y);
+        lastRotation = "RR";
+        affected.clear();
+        affected.push_back({y->key, balanceFactor(y)});
+        affected.push_back({x->key, balanceFactor(x)});
+        return y;
+    }
+
+    Node* rebalance(Node* node) {
+        if (!node) return node;
+        updateHeight(node);
+        int bf = balanceFactor(node);
+        if (bf > 1 && balanceFactor(node->left) >= 0) return rotateRight(node);
+        if (bf > 1 && balanceFactor(node->left) < 0) {
+            node->left = rotateLeft(node->left);
+            lastRotation = "LR";
+            affected.clear();
+            affected.push_back({node->key, balanceFactor(node)});
+            return rotateRight(node);
+        }
+        if (bf < -1 && balanceFactor(node->right) <= 0) return rotateLeft(node);
+        if (bf < -1 && balanceFactor(node->right) > 0) {
+            node->right = rotateRight(node->right);
+            lastRotation = "RL";
+            affected.clear();
+            affected.push_back({node->key, balanceFactor(node)});
+            return rotateLeft(node);
+        }
+        return node;
+    }
+
+    Node* insert(Node* node, const string& key) {
+        if (!node) return new Node(key);
+        if (key < node->key) node->left = insert(node->left, key);
+        else if (key > node->key) node->right = insert(node->right, key);
+        return rebalance(node);
+    }
+
+    Node* minNode(Node* node) {
+        while (node->left) node = node->left;
+        return node;
+    }
+
+    Node* remove(Node* node, const string& key) {
+        if (!node) return node;
+        if (key < node->key) node->left = remove(node->left, key);
+        else if (key > node->key) node->right = remove(node->right, key);
+        else {
+            if (!node->left || !node->right) {
+                Node* tmp = node->left ? node->left : node->right;
+                if (!tmp) {
+                    delete node;
+                    node = nullptr;
+                } else {
+                    *node = *tmp;
+                    delete tmp;
+                }
+            } else {
+                Node* tmp = minNode(node->right);
+                node->key = tmp->key;
+                node->right = remove(node->right, tmp->key);
+            }
+        }
+        if (!node) return node;
+        return rebalance(node);
+    }
+
+    void inorder(Node* node, vector<string>& out) {
+        if (!node) return;
+        inorder(node->left, out);
+        out.push_back(node->key);
+        inorder(node->right, out);
+    }
+
+    void printOperation(const string& op, const string& key) {
+        cout << "Operation: " << op << " " << key << "\n";
+        cout << "Rotation: " << lastRotation << "\n";
+        cout << "Height: " << (root ? root->height : 0) << "\n";
+        for (size_t i = 0; i < affected.size(); ++i) {
+            cout << "Affected: " << affected[i].first << " BF=" << affected[i].second << "\n";
+        }
+        vector<string> out;
+        inorder(root, out);
+        cout << "Inorder: ";
+        for (size_t i = 0; i < out.size(); ++i) {
+            if (i) cout << " ";
+            cout << out[i];
+        }
+        cout << "\n\n";
+    }
+};
+
+int main() {
+    AVL tree;
+    vector<string> inserts = {
+        "24K-0001",
+        "24K-0003",
+        "24K-0002",
+        "24K-0679",
+        "24K-0100",
+        "24K-0200",
+        "24K-0150"
+    };
+    for (size_t i = 0; i < inserts.size(); ++i) tree.insertKey(inserts[i]);
+    vector<string> deletes = { "24K-0003", "24K-0679", "24K-0150", "24K-9999" };
+    for (size_t i = 0; i < deletes.size(); ++i) tree.deleteKey(deletes[i]);
+    return 0;
+}
