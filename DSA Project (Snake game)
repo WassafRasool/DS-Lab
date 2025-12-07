@@ -1,0 +1,554 @@
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <ctime>
+#include <cstdlib>
+#include <sstream>
+
+using namespace sf;
+using namespace std;
+
+const int GRID_WIDTH = 30;
+const int GRID_HEIGHT = 20;
+const int CELL_SIZE = 25;
+const int WINDOW_WIDTH = GRID_WIDTH * CELL_SIZE;
+const int WINDOW_HEIGHT = GRID_HEIGHT * CELL_SIZE + 60;
+
+// Node structure for Linked List (Snake Body)
+struct Node {
+    int x, y;
+    Node* next;
+    
+    Node(int xPos, int yPos) : x(xPos), y(yPos), next(nullptr) {}
+};
+
+// Snake Class using Linked List
+class Snake {
+private:
+    Node* head;
+    Node* tail;
+    int length;
+    char direction;
+    char nextDirection;
+    
+public:
+    Snake(int startX, int startY) {
+        head = new Node(startX, startY);
+        tail = head;
+        length = 1;
+        direction = 'R';
+        nextDirection = 'R';
+    }
+    
+    ~Snake() {
+        Node* current = head;
+        while (current != nullptr) {
+            Node* temp = current;
+            current = current->next;
+            delete temp;
+        }
+    }
+    
+    void setDirection(char dir) {
+        if ((direction == 'U' && dir != 'D') ||
+            (direction == 'D' && dir != 'U') ||
+            (direction == 'L' && dir != 'R') ||
+            (direction == 'R' && dir != 'L')) {
+            nextDirection = dir;
+        }
+    }
+    
+    char getDirection() { return direction; }
+    
+    void grow() {
+        length++;
+    }
+    
+    bool move(int& newHeadX, int& newHeadY) {
+        direction = nextDirection;
+        
+        newHeadX = head->x;
+        newHeadY = head->y;
+        
+        switch (direction) {
+            case 'U': newHeadY--; break;
+            case 'D': newHeadY++; break;
+            case 'L': newHeadX--; break;
+            case 'R': newHeadX++; break;
+        }
+        
+        if (newHeadX < 0 || newHeadX >= GRID_WIDTH || newHeadY < 0 || newHeadY >= GRID_HEIGHT) {
+            return false;
+        }
+        
+        Node* current = head;
+        while (current != nullptr) {
+            if (current->x == newHeadX && current->y == newHeadY) {
+                return false;
+            }
+            current = current->next;
+        }
+        
+        Node* newHead = new Node(newHeadX, newHeadY);
+        newHead->next = head;
+        head = newHead;
+        
+        Node* current2 = head;
+        int count = 0;
+        while (current2->next != nullptr && count < length - 1) {
+            current2 = current2->next;
+            count++;
+        }
+        
+        if (current2->next != nullptr) {
+            Node* oldTail = current2->next;
+            current2->next = nullptr;
+            tail = current2;
+            delete oldTail;
+        } else {
+            tail = current2;
+        }
+        
+        return true;
+    }
+    
+    Node* getHead() { return head; }
+    int getLength() { return length; }
+    
+    bool isBodyAt(int x, int y) {
+        Node* current = head;
+        while (current != nullptr) {
+            if (current->x == x && current->y == y) {
+                return true;
+            }
+            current = current->next;
+        }
+        return false;
+    }
+    
+    void draw(RenderWindow& window) {
+        Node* current = head;
+        bool isHead = true;
+        
+        while (current != nullptr) {
+            RectangleShape segment(Vector2f(CELL_SIZE - 2, CELL_SIZE - 2));
+            segment.setPosition(current->x * CELL_SIZE + 1, current->y * CELL_SIZE + 1);
+            
+            if (isHead) {
+                segment.setFillColor(Color(0, 200, 0));
+                isHead = false;
+            } else {
+                segment.setFillColor(Color(0, 150, 0));
+            }
+            
+            window.draw(segment);
+            current = current->next;
+        }
+    }
+};
+
+// Food Class with Queue
+class Food {
+private:
+    int x, y;
+    queue<pair<int, int>> foodQueue;
+    
+public:
+    Food() {
+        x = -1;
+        y = -1;
+    }
+    
+    void spawn(Snake* snake) {
+        do {
+            x = rand() % GRID_WIDTH;
+            y = rand() % GRID_HEIGHT;
+        } while (snake->isBodyAt(x, y));
+        
+        foodQueue.push({x, y});
+        if (foodQueue.size() > 5) {
+            foodQueue.pop();
+        }
+    }
+    
+    int getX() { return x; }
+    int getY() { return y; }
+    
+    bool isEaten(int snakeX, int snakeY) {
+        return (x == snakeX && y == snakeY);
+    }
+    
+    void draw(RenderWindow& window) {
+        CircleShape foodShape(CELL_SIZE / 2 - 2);
+        foodShape.setPosition(x * CELL_SIZE + 2, y * CELL_SIZE + 2);
+        foodShape.setFillColor(Color::Red);
+        window.draw(foodShape);
+    }
+};
+
+// BFS Pathfinding for AI
+class AIPathfinder {
+private:
+    struct Point {
+        int x, y, dist;
+        Point(int _x, int _y, int _d) : x(_x), y(_y), dist(_d) {}
+    };
+    
+public:
+    char findBestMove(Snake* snake, Food* food) {
+        int headX = snake->getHead()->x;
+        int headY = snake->getHead()->y;
+        int foodX = food->getX();
+        int foodY = food->getY();
+        
+        bool visited[GRID_WIDTH][GRID_HEIGHT] = {false};
+        int parent[GRID_WIDTH][GRID_HEIGHT][2];
+        queue<Point> q;
+        
+        q.push(Point(headX, headY, 0));
+        visited[headX][headY] = true;
+        
+        int dx[] = {0, 0, -1, 1};
+        int dy[] = {-1, 1, 0, 0};
+        
+        while (!q.empty()) {
+            Point curr = q.front();
+            q.pop();
+            
+            if (curr.x == foodX && curr.y == foodY) {
+                int x = curr.x, y = curr.y;
+                while (parent[x][y][0] != headX || parent[x][y][1] != headY) {
+                    int px = parent[x][y][0];
+                    int py = parent[x][y][1];
+                    x = px;
+                    y = py;
+                }
+                
+                if (x == headX && y < headY) return 'U';
+                if (x == headX && y > headY) return 'D';
+                if (x < headX && y == headY) return 'L';
+                if (x > headX && y == headY) return 'R';
+            }
+            
+            for (int i = 0; i < 4; i++) {
+                int nx = curr.x + dx[i];
+                int ny = curr.y + dy[i];
+                
+                if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT &&
+                    !visited[nx][ny] && !snake->isBodyAt(nx, ny)) {
+                    visited[nx][ny] = true;
+                    parent[nx][ny][0] = curr.x;
+                    parent[nx][ny][1] = curr.y;
+                    q.push(Point(nx, ny, curr.dist + 1));
+                }
+            }
+        }
+        
+        return snake->getDirection();
+    }
+};
+
+// Game Engine with GUI
+class Game {
+private:
+    RenderWindow window;
+    Snake* snake;
+    Food* food;
+    AIPathfinder* ai;
+    int score;
+    bool gameOver;
+    bool aiMode;
+    bool shouldRetry;
+    Clock clock;
+    Font font;
+    float moveTimer;
+    float moveInterval;
+    
+public:
+    Game(bool enableAI = false) : window(VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Snake Game - DSA Project") {
+        snake = new Snake(GRID_WIDTH / 2, GRID_HEIGHT / 2);
+        food = new Food();
+        ai = new AIPathfinder();
+        score = 0;
+        gameOver = false;
+        aiMode = enableAI;
+        shouldRetry = false;
+        moveTimer = 0;
+        moveInterval = aiMode ? 0.05f : 0.15f;
+        food->spawn(snake);
+        
+        if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
+            // Fallback - game will work without text
+        }
+        
+        window.setFramerateLimit(60);
+    }
+    
+    ~Game() {
+        delete snake;
+        delete food;
+        delete ai;
+    }
+    
+    void reset() {
+        delete snake;
+        delete food;
+        snake = new Snake(GRID_WIDTH / 2, GRID_HEIGHT / 2);
+        food = new Food();
+        score = 0;
+        gameOver = false;
+        shouldRetry = false;
+        moveTimer = 0;
+        food->spawn(snake);
+    }
+    
+    void handleInput() {
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed) {
+                window.close();
+            }
+            
+            if (event.type == Event::KeyPressed) {
+                if (gameOver) {
+                    if (event.key.code == Keyboard::R) {
+                        shouldRetry = true;
+                    } else if (event.key.code == Keyboard::Escape) {
+                        window.close();
+                    }
+                } else if (!aiMode) {
+                    switch (event.key.code) {
+                        case Keyboard::W:
+                        case Keyboard::Up:
+                            snake->setDirection('U');
+                            break;
+                        case Keyboard::S:
+                        case Keyboard::Down:
+                            snake->setDirection('D');
+                            break;
+                        case Keyboard::A:
+                        case Keyboard::Left:
+                            snake->setDirection('L');
+                            break;
+                        case Keyboard::D:
+                        case Keyboard::Right:
+                            snake->setDirection('R');
+                            break;
+                        case Keyboard::Escape:
+                            window.close();
+                            break;
+                    }
+                } else {
+                    if (event.key.code == Keyboard::Escape) {
+                        window.close();
+                    }
+                }
+            }
+        }
+    }
+    
+    void update(float deltaTime) {
+        if (gameOver) {
+            if (shouldRetry) {
+                reset();
+            }
+            return;
+        }
+        
+        moveTimer += deltaTime;
+        
+        if (moveTimer >= moveInterval) {
+            moveTimer = 0;
+            
+            if (aiMode) {
+                char aiMove = ai->findBestMove(snake, food);
+                snake->setDirection(aiMove);
+            }
+            
+            int newHeadX, newHeadY;
+            if (!snake->move(newHeadX, newHeadY)) {
+                gameOver = true;
+                return;
+            }
+            
+            if (food->isEaten(newHeadX, newHeadY)) {
+                snake->grow();
+                score += 10;
+                food->spawn(snake);
+            }
+        }
+    }
+    
+    void render() {
+        window.clear(Color(20, 20, 30));
+        
+        // Draw grid
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            for (int y = 0; y < GRID_HEIGHT; y++) {
+                RectangleShape cell(Vector2f(CELL_SIZE - 1, CELL_SIZE - 1));
+                cell.setPosition(x * CELL_SIZE, y * CELL_SIZE);
+                cell.setFillColor(Color(40, 40, 50));
+                window.draw(cell);
+            }
+        }
+        
+        food->draw(window);
+        snake->draw(window);
+        
+        // Draw UI
+        RectangleShape uiBar(Vector2f(WINDOW_WIDTH, 60));
+        uiBar.setPosition(0, GRID_HEIGHT * CELL_SIZE);
+        uiBar.setFillColor(Color(30, 30, 40));
+        window.draw(uiBar);
+        
+        if (font.getInfo().family != "") {
+            Text scoreText;
+            scoreText.setFont(font);
+            scoreText.setCharacterSize(20);
+            scoreText.setFillColor(Color::White);
+            
+            stringstream ss;
+            ss << "Score: " << score << "  |  Length: " << snake->getLength() 
+               << "  |  Mode: " << (aiMode ? "AI" : "Manual") 
+               << "  |  " << (aiMode ? "" : "WASD to move, ") << "ESC to quit";
+            scoreText.setString(ss.str());
+            scoreText.setPosition(10, GRID_HEIGHT * CELL_SIZE + 20);
+            window.draw(scoreText);
+            
+            if (gameOver) {
+                Text gameOverText;
+                gameOverText.setFont(font);
+                gameOverText.setCharacterSize(40);
+                gameOverText.setFillColor(Color::Red);
+                gameOverText.setString("GAME OVER!");
+                FloatRect bounds = gameOverText.getLocalBounds();
+                gameOverText.setPosition((WINDOW_WIDTH - bounds.width) / 2, 
+                                        (GRID_HEIGHT * CELL_SIZE - bounds.height) / 2 - 40);
+                window.draw(gameOverText);
+                
+                Text finalScore;
+                finalScore.setFont(font);
+                finalScore.setCharacterSize(25);
+                finalScore.setFillColor(Color::White);
+                ss.str("");
+                ss << "Final Score: " << score;
+                finalScore.setString(ss.str());
+                FloatRect bounds2 = finalScore.getLocalBounds();
+                finalScore.setPosition((WINDOW_WIDTH - bounds2.width) / 2, 
+                                      (GRID_HEIGHT * CELL_SIZE - bounds2.height) / 2 + 20);
+                window.draw(finalScore);
+                
+                Text retryText;
+                retryText.setFont(font);
+                retryText.setCharacterSize(22);
+                retryText.setFillColor(Color::Yellow);
+                retryText.setString("Press R to Retry  |  ESC to Quit");
+                FloatRect bounds3 = retryText.getLocalBounds();
+                retryText.setPosition((WINDOW_WIDTH - bounds3.width) / 2, 
+                                     (GRID_HEIGHT * CELL_SIZE - bounds3.height) / 2 + 70);
+                window.draw(retryText);
+            }
+        }
+        
+        window.display();
+    }
+    
+    void run() {
+        while (window.isOpen()) {
+            float deltaTime = clock.restart().asSeconds();
+            handleInput();
+            update(deltaTime);
+            render();
+        }
+    }
+};
+
+// Menu screen
+bool showMenu(RenderWindow& window, Font& font) {
+    while (window.isOpen()) {
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed) {
+                window.close();
+                return false;
+            }
+            
+            if (event.type == Event::KeyPressed) {
+                if (event.key.code == Keyboard::Num1) {
+                    return false; // Manual mode
+                } else if (event.key.code == Keyboard::Num2) {
+                    return true; // AI mode
+                } else if (event.key.code == Keyboard::Escape) {
+                    window.close();
+                    return false;
+                }
+            }
+        }
+        
+        window.clear(Color(20, 20, 30));
+        
+        if (font.getInfo().family != "") {
+            Text title;
+            title.setFont(font);
+            title.setCharacterSize(40);
+            title.setFillColor(Color::Green);
+            title.setString("SNAKE GAME");
+            FloatRect bounds = title.getLocalBounds();
+            title.setPosition((WINDOW_WIDTH - bounds.width) / 2, 80);
+            window.draw(title);
+            
+            Text subtitle;
+            subtitle.setFont(font);
+            subtitle.setCharacterSize(18);
+            subtitle.setFillColor(Color::White);
+            subtitle.setString("Data Structures & Algorithms Project");
+            FloatRect bounds2 = subtitle.getLocalBounds();
+            subtitle.setPosition((WINDOW_WIDTH - bounds2.width) / 2, 140);
+            window.draw(subtitle);
+            
+            Text features;
+            features.setFont(font);
+            features.setCharacterSize(16);
+            features.setFillColor(Color(150, 150, 150));
+            features.setString("Features:\n- Linked List: Snake body\n- Queue: Food spawning\n- BFS: AI pathfinding");
+            features.setPosition(50, 200);
+            window.draw(features);
+            
+            Text instructions;
+            instructions.setFont(font);
+            instructions.setCharacterSize(22);
+            instructions.setFillColor(Color::Yellow);
+            instructions.setString("Press 1 for MANUAL mode\nPress 2 for AI mode\nESC to exit");
+            FloatRect bounds3 = instructions.getLocalBounds();
+            instructions.setPosition((WINDOW_WIDTH - bounds3.width) / 2, 340);
+            window.draw(instructions);
+        }
+        
+        window.display();
+    }
+    
+    return false;
+}
+
+int main() {
+    srand(time(0));
+    
+    RenderWindow menuWindow(VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Snake Game - Menu");
+    Font font;
+    
+    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
+        cout << "Warning: Could not load font. Game will work but without text." << endl;
+    }
+    
+    bool aiMode = showMenu(menuWindow, font);
+    menuWindow.close();
+    
+    if (menuWindow.isOpen() || aiMode || !aiMode) {
+        Game game(aiMode);
+        game.run();
+    }
+    
+    return 0;
+}
