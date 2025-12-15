@@ -17,140 +17,111 @@ public:
 
 class AVL {
 public:
-    // Get height of node
-    int getHeight(Node* node) {
-        return node ? node->height : 0;
+    int getHeight(Node* n) {
+        if (n == nullptr) return 0;
+        return n->height;
     }
 
-    // Get balance factor
-    int getBalance(Node* node) {
-        return node ? getHeight(node->left) - getHeight(node->right) : 0;
+    int getBalance(Node* n) {
+        if (n == nullptr) return 0;
+        return getHeight(n->left) - getHeight(n->right);
     }
 
-    // Right rotate subtree rooted with x
-    Node* rightRotate(Node* x) {
-        Node* y = x->left;
-        Node* T2 = y->right;
-
-        y->right = x;
-        x->left = T2;
-
-        x->height = max(getHeight(x->left), getHeight(x->right)) + 1;
+    Node* rightRotate(Node* y) {
+        Node* x = y->left;
+        Node* T2 = x->right;
+        x->right = y;
+        y->left = T2;
         y->height = max(getHeight(y->left), getHeight(y->right)) + 1;
-
-        return y; // new root
+        x->height = max(getHeight(x->left), getHeight(x->right)) + 1;
+        return x;
     }
 
-    // Left rotate subtree rooted with x
     Node* leftRotate(Node* x) {
         Node* y = x->right;
         Node* T2 = y->left;
-
         y->left = x;
         x->right = T2;
-
         x->height = max(getHeight(x->left), getHeight(x->right)) + 1;
         y->height = max(getHeight(y->left), getHeight(y->right)) + 1;
-
-        return y; // new root
+        return y;
     }
 
-    // Insert a key in AVL
-    Node* insert(Node* root, int key) {
-        if (!root) return new Node(key);
+    Node* insert(Node* node, int key) {
+        if (node == nullptr)
+            return new Node(key);
 
-        if (key < root->key)
-            root->left = insert(root->left, key);
-        else if (key > root->key)
-            root->right = insert(root->right, key);
+        if (key < node->key)
+            node->left = insert(node->left, key);
+        else if (key > node->key)
+            node->right = insert(node->right, key);
         else
-            return root; // duplicate keys not allowed
+            return node;
 
-        // Update height
-        root->height = 1 + max(getHeight(root->left), getHeight(root->right));
+        node->height = 1 + max(getHeight(node->left), getHeight(node->right));
+        int balance = getBalance(node);
 
-        // Check balance
-        int balance = getBalance(root);
-
-        // Left Left Case
-        if (balance > 1 && key < root->left->key)
-            return rightRotate(root);
-
-        // Right Right Case
-        if (balance < -1 && key > root->right->key)
-            return leftRotate(root);
-
-        // Left Right Case
-        if (balance > 1 && key > root->left->key) {
-            root->left = leftRotate(root->left);
-            return rightRotate(root);
+        if (balance > 1 && key < node->left->key)
+            return rightRotate(node);
+        if (balance < -1 && key > node->right->key)
+            return leftRotate(node);
+        if (balance > 1 && key > node->left->key) {
+            node->left = leftRotate(node->left);
+            return rightRotate(node);
+        }
+        if (balance < -1 && key < node->right->key) {
+            node->right = rightRotate(node->right);
+            return leftRotate(node);
         }
 
-        // Right Left Case
-        if (balance < -1 && key < root->right->key) {
-            root->right = rightRotate(root->right);
-            return leftRotate(root);
-        }
-
-        return root;
-    }
-
-    // Find node with minimum key (used in deletion)
-    Node* findMin(Node* node) {
-        while (node->left) node = node->left;
         return node;
     }
 
-    // Delete a key from AVL
+    Node* findMin(Node* node) {
+        while (node->left != nullptr)
+            node = node->left;
+        return node;
+    }
+
     Node* deleteNode(Node* root, int key) {
-        if (!root) return root;
+        if (root == nullptr)
+            return root;
 
         if (key < root->key)
             root->left = deleteNode(root->left, key);
         else if (key > root->key)
             root->right = deleteNode(root->right, key);
         else {
-            // Node with one or zero child
-            if (!root->left || !root->right) {
+            if ((root->left == nullptr) || (root->right == nullptr)) {
                 Node* temp = root->left ? root->left : root->right;
-                if (!temp) {
+                if (temp == nullptr) {
                     temp = root;
                     root = nullptr;
                 } else {
                     *root = *temp;
                 }
                 delete temp;
-            } 
-            else {
+            } else {
                 Node* temp = findMin(root->right);
                 root->key = temp->key;
                 root->right = deleteNode(root->right, temp->key);
             }
         }
 
-        if (!root) return root;
+        if (root == nullptr)
+            return root;
 
-        // Update height
         root->height = 1 + max(getHeight(root->left), getHeight(root->right));
-
-        // Check balance
         int balance = getBalance(root);
 
-        // Left Left Case
         if (balance > 1 && getBalance(root->left) >= 0)
             return rightRotate(root);
-
-        // Left Right Case
         if (balance > 1 && getBalance(root->left) < 0) {
             root->left = leftRotate(root->left);
             return rightRotate(root);
         }
-
-        // Right Right Case
         if (balance < -1 && getBalance(root->right) <= 0)
             return leftRotate(root);
-
-        // Right Left Case
         if (balance < -1 && getBalance(root->right) > 0) {
             root->right = rightRotate(root->right);
             return leftRotate(root);
@@ -159,18 +130,21 @@ public:
         return root;
     }
 
-    // Search in AVL
     Node* search(Node* root, int key) {
-        if (!root || root->key == key) return root;
-        return key < root->key ? search(root->left, key) : search(root->right, key);
+        if (root == nullptr || root->key == key)
+            return root;
+        if (key < root->key)
+            return search(root->left, key);
+        else
+            return search(root->right, key);
     }
 
-    // Inorder traversal
     void inorder(Node* root) {
-        if (!root) return;
-        inorder(root->left);
-        cout << root->key << " ";
-        inorder(root->right);
+        if (root) {
+            inorder(root->left);
+            cout << root->key << " ";
+            inorder(root->right);
+        }
     }
 };
 
@@ -178,7 +152,6 @@ int main() {
     AVL tree;
     Node* root = nullptr;
 
-    // Insert nodes
     root = tree.insert(root, 10);
     root = tree.insert(root, 20);
     root = tree.insert(root, 30);
@@ -190,17 +163,17 @@ int main() {
     tree.inorder(root);
     cout << endl;
 
-    // Delete a node
     cout << "Deleting 40\n";
     root = tree.deleteNode(root, 40);
     cout << "After Deletion: ";
     tree.inorder(root);
     cout << endl;
 
-    // Search for a node
     int key = 30;
     Node* found = tree.search(root, key);
-    cout << "Key " << key << (found ? " found in AVL.\n" : " not found in AVL.\n");
-
-    return 0;
+    if (found)
+        cout << "Key " << key << " found in AVL.\n";
+    else
+        cout << "Key " << key << " not found in AVL.\n";
 }
+
