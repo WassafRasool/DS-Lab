@@ -19,12 +19,13 @@ public:
             table[i] = EMPTY;
     }
 
-    int hash1(int key) { return key % size; }            // primary hash
-    int hash2(int key) { return 1 + (key % (size - 1)); } // for double hashing
+    // ================= Hash Functions =================
+    int hash1(int key) { return key % 13; }           // new primary hash
+    int hash2(int key) { return 7 - (key % 7); }     // new step size for double hashing
 
     // ================= Linear Probing =================
     void insertLinear(int key) {
-        int idx = hash1(key);
+        int idx = key % size;
         int start = idx;
         while (table[idx] != EMPTY && table[idx] != DELETED) {
             idx = (idx + 1) % size;
@@ -34,7 +35,7 @@ public:
     }
 
     bool searchLinear(int key) {
-        int idx = hash1(key);
+        int idx = key % size;
         int start = idx;
         while (table[idx] != EMPTY) {
             if (table[idx] == key)
@@ -46,7 +47,7 @@ public:
     }
 
     void removeLinear(int key) {
-        int idx = hash1(key);
+        int idx = key % size;
         int start = idx;
         while (table[idx] != EMPTY) {
             if (table[idx] == key) {
@@ -61,7 +62,7 @@ public:
 
     // ================= Quadratic Probing =================
     void insertQuadratic(int key) {
-        int idx = hash1(key);
+        int idx = key % size;
         int i = 0;
         while (table[(idx + i*i) % size] != EMPTY && table[(idx + i*i) % size] != DELETED) {
             i++;
@@ -71,7 +72,7 @@ public:
     }
 
     bool searchQuadratic(int key) {
-        int idx = hash1(key);
+        int idx = key % size;
         int i = 0;
         while (table[(idx + i*i) % size] != EMPTY && i < size) {
             if (table[(idx + i*i) % size] == key)
@@ -82,7 +83,7 @@ public:
     }
 
     void removeQuadratic(int key) {
-        int idx = hash1(key);
+        int idx = key % size;
         int i = 0;
         while (table[(idx + i*i) % size] != EMPTY && i < size) {
             if (table[(idx + i*i) % size] == key) {
@@ -146,7 +147,7 @@ public:
 };
 
 int main() {
-    int size = 7;
+    int size = 13;  // updated table size
     HashTable ht(size);
 
     cout << "----- Linear Probing -----\n";
